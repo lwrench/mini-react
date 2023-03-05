@@ -1,8 +1,6 @@
-const a = 1;
-function foo() {
-	const a = 2;
+import { jsx } from './src/jsx';
 
-	console.log('foo');
-}
-
-export { a };
+export default {
+	version: '0.0.0',
+	createElement: jsx
+};
