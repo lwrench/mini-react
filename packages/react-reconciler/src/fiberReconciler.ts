@@ -22,6 +22,7 @@ export function updateContainer(
 	root: FiberRootNode
 ) {
 	const hostRootFiber = root.current;
+	// 传入的是生成 reactElement 的函数(<App/>)
 	const update = createUpdate<ReactElementType | null>(element);
 
 	enqueueUpdate(
