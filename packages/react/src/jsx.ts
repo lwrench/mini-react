@@ -76,7 +76,7 @@ export const jsx = function (
 	return ReactElement(type, key, ref, props);
 };
 
-export const jsxDev = function (type: ElementType, config: any) {
+export const jsxDEV = function (type: ElementType, config: any) {
 	let key: Key = null;
 	let ref: Ref = null;
 	const props: Props = {};
