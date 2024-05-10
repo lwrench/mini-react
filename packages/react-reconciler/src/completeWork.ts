@@ -6,7 +6,12 @@ import {
 } from 'hostConfig';
 import { FiberNode } from './fiber';
 import { NoFlags } from './fiberFlags';
-import { HostComponent, HostRoot, HostText } from './workTags';
+import {
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText
+} from './workTags';
 
 /**
  * 对于Host类型的fiber，构建离屏dom树
@@ -32,6 +37,9 @@ export function completeWork(wip: FiberNode) {
 				appendAllChildren(instance, wip);
 				wip.stateNode = instance;
 			}
+			bubbleProperties(wip);
+			return null;
+		case FunctionComponent:
 			bubbleProperties(wip);
 			return null;
 		case HostText:
