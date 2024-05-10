@@ -1,0 +1,13 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
+function App() {
+	return <div>{Child()}</div>;
+}
+function Child() {
+	return <span>Hello React</span>;
+}
+
+ReactDOM.createRoot(document.querySelector('#root') as HTMLElement).render(
+	<App />
+);
