@@ -20,7 +20,7 @@
 
 ## 更新流程
 
-![alt text](./assets/image.png)
+![alt text](./assets/fiberroot.png)
 目的是：
 
 - 生成 wip fiber 树
@@ -38,3 +38,11 @@
 ### completeWork
 
 产物是包含一些 flags 的 fiber 树
+
+# hooks
+
+hooks 在 mount 时和 update 时功能并不一样，他是如何感知上下执行环境的？很明显这些上下执行环境需要在 reconciler 包中才可以感知到，可以在不同的 hooks 中通过写 ifelse 判断来区分不同的环境；但是 hooks 都是从 react 包中导出，所以需要有链接两个包的桥梁
+
+react 采用的是使用了一个中间层，维护一个 dispatcher 对象，在 reconciler 包中的不同上下文环境中对应不同的 hooks 实现，在执行进入相应的上下文就切换相应的 hooks 实现；同时在 react 包中只暴露 dispatcher 对象即可
+
+![alt text](./assets/dispatcher.png)
