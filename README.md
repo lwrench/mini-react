@@ -58,3 +58,7 @@ hooks 在 mount 时和 update 时功能并不一样，他是如何感知上下�
 react 采用的是使用了一个中间层，维护一个 dispatcher 对象，在 reconciler 包中的不同上下文环境中对应不同的 hooks 实现，在执行进入相应的上下文就切换相应的 hooks 实现；同时在 react 包中只暴露 dispatcher 对象即可
 
 ![alt text](./assets/dispatcher.png)
+
+# syntheticEvent
+
+react 内部模拟实现了事件系统，简单来说将 props 在 completeWork 阶段挂在在 stateNode 上的一个自定义属性，然后在项目 mount 阶段在 container 节点进行事件委托，根据事件触发的 target 去向上遍历所有的 dom 节点，收集沿途 dom 节点中存储的 props 的事件回调函数，分别维护在 capture 和 bubble 数组中，收集完毕再创建合成事件用于实现 stopPropagation，然后依此遍历 capture 和 bubble 数组去触发回调事件
