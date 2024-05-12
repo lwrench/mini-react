@@ -42,15 +42,15 @@ export function beginWork(wip: FiberNode) {
 }
 
 function updateHostRoot(wip: FiberNode) {
-	const baseState = wip.memoizedState;
+	const baseState = wip.memorizedState;
 	const updateQueue = wip.updateQueue as UpdateQueue<Element>;
 	const pending = updateQueue.shared.pending;
 	updateQueue.shared.pending = null;
 	const { memorizedState } = processUpdateQueue(baseState, pending);
-	wip.memoizedState = memorizedState;
+	wip.memorizedState = memorizedState;
 
-	// hostRootFiber的子reactElement，见updateContainer的传入参数
-	const nextChildren = wip.memoizedState;
+	// hostRootFiber的子reactElement，即updateContainer的传入参数
+	const nextChildren = wip.memorizedState;
 	// 需要和hostRootFiber的子 current fiber对比，即wip.alternate.child
 	reconcileChildren(wip, nextChildren);
 	return wip.child;

@@ -4,6 +4,7 @@ import { FlagsType, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
 
 export class FiberNode {
+	// 'div' 'span' 'func App' 'class Comp' ...
 	type: any;
 	tag: WorkTag;
 	pendingProps: Props;
@@ -16,12 +17,16 @@ export class FiberNode {
 	child: FiberNode | null;
 	index: number;
 
-	memoizedProps: Props | null;
-	memoizedState: any;
+	memorizedProps: Props | null;
+	memorizedState: any;
 	alternate: FiberNode | null;
+
+	updateQueue: unknown;
+
+	// 副作用
 	flags: FlagsType;
 	subtreeFlags: FlagsType;
-	updateQueue: unknown;
+	deletions: FiberNode[] | null;
 
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		// fiber的类型
@@ -44,15 +49,16 @@ export class FiberNode {
 		// 刚开始的props
 		this.pendingProps = pendingProps;
 		// 结束时的props
-		this.memoizedProps = null;
+		this.memorizedProps = null;
 		this.updateQueue = null;
 		// reactElement ?
-		this.memoizedState = null;
+		this.memorizedState = null;
 
 		this.alternate = null;
 		// diff后需要打上的标签，即副作用
 		this.flags = NoFlags;
 		this.subtreeFlags = NoFlags;
+		this.deletions = null;
 	}
 }
 
@@ -96,12 +102,14 @@ export const createWorkInProgress = (
 		wip.pendingProps = pendingProps;
 		wip.flags = NoFlags;
 		wip.subtreeFlags = NoFlags;
+		wip.deletions = null;
 	}
 	wip.type = current.type;
 	wip.updateQueue = current.updateQueue;
 	wip.child = current.child;
-	wip.memoizedProps = current.memoizedProps;
-	wip.memoizedState = current.memoizedState;
+	wip.memorizedProps = current.memorizedProps;
+	wip.memorizedState = current.memorizedState;
+	wip.deletions = null;
 
 	return wip;
 };

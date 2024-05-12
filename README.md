@@ -33,7 +33,19 @@
 
 ### beginWork
 
-产物是
+- mount 阶段
+
+根据 wip fiber 的 memorizedState（存储着 reactElement）和 wip.alternate(即 current fiber)的 child 对比生成 wip.child，同时会给 wip.child 打上 flag
+
+- update 阶段
+
+进行 diff，通过`ChildReconciler`函数比较 current fiber child 和 wip 的 children（hostComponent 对应 props.children,functionComponent 对饮 renderWithHook 结果，即函数运行结果）生成 wip fiber child，在此阶段会判断 children 的类型
+
+- object 类型
+  比对 key、type 是否相同，相同即可复用，不同即将当前 current child fiber 加入 wip fiber 的 deletions 字段中，并创建新的 fiber
+- Array 类型
+- string / number 类型
+  文本类型只需比对 current fiber child tag 是否和当前 child 的 tag 相同，即之前是否为文本节点类型的 fiber，相同则更新文本类型，不同则需要创建新的 fiber 并且删除之前的 fiber，把 current child fiber 加入 wip fiber 的 deletions 属性中
 
 ### completeWork
 
