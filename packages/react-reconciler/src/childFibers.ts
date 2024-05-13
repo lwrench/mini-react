@@ -8,6 +8,8 @@ import {
 import { ChildDeletion, Placement } from './fiberFlags';
 import { HostText } from './workTags';
 
+type ExistingChildren = Map<string | number, FiberNode>;
+
 function ChildReconciler(shouldTrackEffects: boolean) {
 	function deleteChild(returnFiber: FiberNode, childToDelete: FiberNode) {
 		if (!shouldTrackEffects) {
@@ -19,6 +21,20 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 			returnFiber.flags |= ChildDeletion;
 		} else {
 			deletions.push(childToDelete);
+		}
+	}
+	// 遍历所有的sibling并标记删除
+	function deleteRemainingChildren(
+		returnFiber: FiberNode,
+		currentFirstChild: FiberNode | null
+	) {
+		if (!shouldTrackEffects) {
+			return;
+		}
+		let childToDelete = currentFirstChild;
+		while (childToDelete !== null) {
+			deleteChild(returnFiber, childToDelete);
+			childToDelete = childToDelete.sibling;
 		}
 	}
 	/**
@@ -34,30 +50,31 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		element: ReactElementType
 	) {
 		const key = element.key;
-		work: if (currentFiber !== null) {
+		while (currentFiber !== null) {
 			// update
 			if (currentFiber.key === key) {
 				if (element.$$typeof === REACT_ELEMENT_TYPE) {
 					if (currentFiber.type === element.type) {
-						// 可以复用
+						// 当前节点可以复用，剩下的节点需要删除
 						const existing = useFiber(currentFiber, element.props);
 						existing.return = returnFiber;
+						deleteRemainingChildren(returnFiber, currentFiber.sibling);
 
 						return existing;
 					} else {
-						// 删掉旧的
-						deleteChild(returnFiber, currentFiber);
-						break work;
+						// key相同，type不同 删掉所有旧的
+						deleteRemainingChildren(returnFiber, currentFiber);
 					}
 				} else {
 					if (__DEV__) {
 						console.warn('还未实现的react类型');
 					}
-					break work;
+					break;
 				}
 			} else {
-				// 删掉旧的
+				// key不同 不能服用 删掉旧的
 				deleteChild(returnFiber, currentFiber);
+				currentFiber = currentFiber.sibling;
 			}
 		}
 		// 根据react Element创建一个fiber
@@ -78,15 +95,17 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		currentFiber: FiberNode | null,
 		content: string | number
 	) {
-		if (currentFiber !== null) {
+		while (currentFiber !== null) {
 			// update
 			if (currentFiber.tag === HostText) {
 				// 类型没变，可以复用
 				const existing = useFiber(currentFiber, { content });
 				existing.return = returnFiber;
+				deleteRemainingChildren(returnFiber, currentFiber.sibling);
 				return existing;
 			}
 			deleteChild(returnFiber, currentFiber);
+			currentFiber = currentFiber.sibling;
 		}
 		const fiber = new FiberNode(HostText, { content }, null);
 		fiber.return = returnFiber;
@@ -102,6 +121,122 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 			fiber.flags |= Placement;
 		}
 		return fiber;
+	}
+
+	function reconcileChildrenArray(
+		returnFiber: FiberNode,
+		currentFirstChild: FiberNode | null,
+		newChild: any[]
+	) {
+		// 最后一个可复用fiber在current中的index
+		let lastPlacedIndex = 0;
+		// 创建的最后一个fiber
+		let lastNewFiber: FiberNode | null = null;
+		// 创建的第一个fiber
+		let firstNewFiber: FiberNode | null = null;
+
+		// 1.将current保存在map中，current是指current fiber child 通过sibling指针连接的一条单向链表
+		const existingChildren: ExistingChildren = new Map();
+		let current = currentFirstChild;
+		while (current !== null) {
+			const keyToUse = current.key !== null ? current.key : current.index;
+			existingChildren.set(keyToUse, current);
+			current = current.sibling;
+		}
+
+		for (let i = 0; i < newChild.length; i++) {
+			// 2.遍历newChild，寻找是否可复用。newChild是由jsx()函数转换生成的reactElement数组
+			const after = newChild[i];
+
+			const newFiber = updateFromMap(returnFiber, existingChildren, i, after);
+
+			if (newFiber === null) {
+				continue;
+			}
+
+			// 3. 标记移动还是插入
+			newFiber.index = i;
+			newFiber.return = returnFiber;
+
+			// 保证lastNewFiber是最后的fiber，firstNewFiber是最前的fiber
+			if (lastNewFiber === null) {
+				lastNewFiber = newFiber;
+				firstNewFiber = newFiber;
+			} else {
+				lastNewFiber.sibling = newFiber;
+				lastNewFiber = lastNewFiber.sibling;
+			}
+
+			if (!shouldTrackEffects) {
+				continue;
+			}
+
+			const current = newFiber.alternate;
+			if (current !== null) {
+				const oldIndex = current.index;
+				if (oldIndex < lastPlacedIndex) {
+					// 移动
+					newFiber.flags |= Placement;
+					continue;
+				} else {
+					// 不移动
+					lastPlacedIndex = oldIndex;
+				}
+			} else {
+				// mount
+				newFiber.flags |= Placement;
+			}
+		}
+
+		// 4. 将Map中剩下的标记为删除
+		existingChildren.forEach((fiber) => {
+			deleteChild(returnFiber, fiber);
+		});
+		return firstNewFiber;
+	}
+
+	function updateFromMap(
+		returnFiber: FiberNode,
+		existingChildren: ExistingChildren,
+		index: number,
+		element: any
+	): FiberNode | null {
+		const keyToUse = element.key !== null ? element.key : index;
+		const before = existingChildren.get(keyToUse);
+
+		// HostText
+		if (typeof element === 'string' || typeof element === 'number') {
+			// key相同
+			if (before) {
+				// type相同
+				if (before.tag === HostText) {
+					// 可以复用，就从map中删除对应的key value
+					existingChildren.delete(keyToUse);
+					return useFiber(before, { content: element + '' });
+				}
+			}
+			return new FiberNode(HostText, { content: element + '' }, null);
+		}
+
+		// ReactElement
+		if (typeof element === 'object' && element !== null) {
+			switch (element.$$typeof) {
+				case REACT_ELEMENT_TYPE:
+					if (before) {
+						if (before.type === element.type) {
+							existingChildren.delete(keyToUse);
+							return useFiber(before, element.props);
+						}
+					}
+					return createFiberFromElement(element);
+			}
+
+			// TODO 数组类型
+			if (Array.isArray(element) && __DEV__) {
+				console.warn('还未实现数组类型的child');
+			}
+		}
+		return null;
 	}
 
 	return function reconcileChildFibers(
@@ -121,9 +256,13 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 					}
 					break;
 			}
+
+			// 多节点的情况 ul> li*3
+			if (Array.isArray(newChild)) {
+				return reconcileChildrenArray(returnFiber, currentFiber, newChild);
+			}
 		}
 
-		// TODO ui > 3*li
 		// HostText
 		if (typeof newChild === 'string' || typeof newChild === 'number') {
 			return placeSingleChild(
