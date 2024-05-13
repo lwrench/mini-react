@@ -100,7 +100,7 @@ const commitPlacement = (finishedWork: FiberNode) => {
 
 	// 找到fiber对应的dom，并且将dom append到 parent dom中
 	if (hostParent !== null) {
-		insertOrAppendPlacementNodeIntoContainer(finishedWork, hostParent);
+		insertOrAppendPlacementNodeIntoContainer(finishedWork, hostParent, sibling);
 	}
 };
 
