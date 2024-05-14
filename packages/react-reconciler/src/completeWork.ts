@@ -8,6 +8,7 @@ import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
 import { FiberNode } from './fiber';
 import { NoFlags, Update } from './fiberFlags';
 import {
+	Fragment,
 	FunctionComponent,
 	HostComponent,
 	HostRoot,
@@ -46,9 +47,7 @@ export function completeWork(wip: FiberNode) {
 			}
 			bubbleProperties(wip);
 			return null;
-		case FunctionComponent:
-			bubbleProperties(wip);
-			return null;
+
 		case HostText:
 			if (current !== null && wip.stateNode) {
 				// update
@@ -67,6 +66,8 @@ export function completeWork(wip: FiberNode) {
 			bubbleProperties(wip);
 			return null;
 		case HostRoot:
+		case FunctionComponent:
+		case Fragment:
 			bubbleProperties(wip);
 			return;
 		default:
