@@ -271,7 +271,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		}
 
 		if (currentFiber !== null) {
-			deleteChild(returnFiber, currentFiber);
+			deleteRemainingChildren(returnFiber, currentFiber);
 		}
 
 		if (__DEV__) {
