@@ -21,5 +21,6 @@
 			"hostConfig": ["./react-dom/src/hostConfig"]
 		}
 	},
-	"include": ["./packages/**/*"]
+	"include": ["./packages/**/*"],
+	"exclude": ["./playground/**/*"]
 }

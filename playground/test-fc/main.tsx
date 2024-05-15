@@ -6,6 +6,19 @@ function App() {
 
 	return (
 		<>
+			<div
+				onClick={() => {
+					setNum((prev) => prev + 1);
+					setNum((prev) => prev + 1);
+					setNum((prev) => prev + 1);
+				}}
+			>
+				{num}
+			</div>
+		</>
+	);
+	return (
+		<>
 			<div></div>
 			<div></div>
 		</>
