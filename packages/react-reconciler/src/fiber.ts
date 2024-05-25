@@ -8,6 +8,7 @@ import {
 import { FlagsType, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLane';
+import { Effect } from './fiberHooks';
 
 export class FiberNode {
 	// 'div' 'span' 'func App' 'class Comp' ...
@@ -27,6 +28,8 @@ export class FiberNode {
 	memorizedState: any;
 	alternate: FiberNode | null;
 
+	// function component fiber中保存effect
+	// host root fiber 保存 render函数生成的update，action为<App /> 生成的react element
 	updateQueue: unknown;
 
 	// 副作用
@@ -68,6 +71,11 @@ export class FiberNode {
 	}
 }
 
+export interface PendingPassiveEffects {
+	unmount: Effect[];
+	update: Effect[];
+}
+
 export class FiberRootNode {
 	// 保存宿主环境的挂载点，在 web 中即为 document.getElementById('root') dom节点
 	container: Container;
@@ -80,6 +88,8 @@ export class FiberRootNode {
 	// 本次更新消费的Lane
 	finishedLane: Lane;
 
+	pendingPassiveEffects: PendingPassiveEffects;
+
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
 		this.current = hostRootFiber;
@@ -87,6 +97,11 @@ export class FiberRootNode {
 		this.finishedWork = null;
 		this.pendingLanes = NoLanes;
 		this.finishedLane = NoLane;
+
+		this.pendingPassiveEffects = {
+			unmount: [],
+			update: []
+		};
 	}
 }
 
