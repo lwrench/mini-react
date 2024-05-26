@@ -166,7 +166,7 @@ function commitRoot(root: FiberRootNode) {
 	) {
 		if (!rootDoesHasPassiveEffects) {
 			rootDoesHasPassiveEffects = true;
-			// 调度副作用
+			// 异步调度副作用，多次执行commit root只调度一次effect
 			scheduleCallback(NormalPriority, () => {
 				// 执行副作用
 				flushPassiveEffects(root.pendingPassiveEffects);
@@ -177,8 +177,9 @@ function commitRoot(root: FiberRootNode) {
 
 	// 判断是否存在3个子阶段需要执行的操作
 	const subtreeHasEffect =
-		(finishedWork.subtreeFlags & MutationMask) !== NoFlags;
-	const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
+		(finishedWork.subtreeFlags & (MutationMask | PassiveMask)) !== NoFlags;
+	const rootHasEffect =
+		(finishedWork.flags & (MutationMask | PassiveMask)) !== NoFlags;
 
 	if (subtreeHasEffect || rootHasEffect) {
 		// beforeMutation
@@ -195,8 +196,8 @@ function commitRoot(root: FiberRootNode) {
 	ensureRootIsScheduled(root);
 }
 
-// 本次更新的任何create回调都必须在所有上一次更新的destroy回调执行完后再执行。
 function flushPassiveEffects(pendingPassiveEffects: PendingPassiveEffects) {
+	// 每个effect都是lastEffect（环状链表）
 	pendingPassiveEffects.unmount.forEach((effect) => {
 		commitHookEffectListUnmount(Passive, effect);
 	});
@@ -211,6 +212,7 @@ function flushPassiveEffects(pendingPassiveEffects: PendingPassiveEffects) {
 		commitHookEffectListCreate(Passive | HookHasEffect, effect);
 	});
 	pendingPassiveEffects.update = [];
+	// 回调过程中可能触发更新
 	flushSyncCallbacks();
 }
 

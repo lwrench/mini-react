@@ -25,6 +25,7 @@ export class FiberNode {
 	index: number;
 
 	memorizedProps: Props | null;
+	// function 保存 hooks链表
 	memorizedState: any;
 	alternate: FiberNode | null;
 

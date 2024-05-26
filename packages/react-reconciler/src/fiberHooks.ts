@@ -47,6 +47,7 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 	// 重置hook链表
 	wip.memorizedState = null;
 	// 重置effect hook链表
+	wip.updateQueue = null;
 	renderLane = lane;
 
 	const current = wip.alternate;
