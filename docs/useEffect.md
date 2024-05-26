@@ -32,7 +32,7 @@ export interface Effect {
 
 ### 给 fiber 打上 tag，用于后续 commit 阶段消费
 
-在 mount 时 useEffect 会产生副作用，因此会给当前 fiber 的 flags 打上 PassiveEffect 的标签
+在 mount 时 useEffect 会产生副作用，因此会给当前 fiber 的 flags 打上 PassiveEffect 的标签，会给当前 Effect 对象打上 HookHasEffect 标签
 
 ## update 阶段
 
