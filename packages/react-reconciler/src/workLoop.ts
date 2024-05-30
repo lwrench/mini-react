@@ -40,6 +40,7 @@ let rootDoesHasPassiveEffects = false;
 type RootExitStatus = number;
 const RootInComplete = 1;
 const RootCompleted = 2;
+
 // TODO 执行过程中报错了
 
 /**
@@ -47,6 +48,8 @@ const RootCompleted = 2;
  * @param root
  */
 function prepareFreshStack(root: FiberRootNode, lane: Lane) {
+	root.finishedLane = NoLane;
+	root.finishedWork = null;
 	// 得到hostRootFiber对应的双缓存wip
 	workInProgress = createWorkInProgress(root.current, {});
 	wipRootRenderLane = lane;
@@ -76,6 +79,7 @@ function ensureRootIsScheduled(root: FiberRootNode) {
 	const curPriority = updateLane;
 	const prevPriority = root.callbackPriority;
 
+	// 优先级一致，不需要重新调度，此时会在 performConcurrentWorkOnRoot 中调度时不改变 currentCallbackNode
 	if (curPriority === prevPriority) {
 		return;
 	}
@@ -158,10 +162,11 @@ function performConcurrentWorkOnRoot(
 	ensureRootIsScheduled(root);
 
 	if (exitStatus === RootInComplete) {
-		// 中断
+		// 中断才会进入此分支，再经过一次调度，判断currentCallbackNode是否变化，有变化则说明有更高优先级的任务插入
 		if (root.callbackNode !== currentCallbackNode) {
 			return null;
 		}
+		// 没变化则继续返回当前任务
 		return performConcurrentWorkOnRoot.bind(null, root);
 	}
 
@@ -241,13 +246,6 @@ function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: boolean) {
 	}
 	// TODO 报错
 	return RootCompleted;
-
-	const finishedWork = root.current.alternate;
-	root.finishedWork = finishedWork;
-	root.finishedLane = lane;
-	wipRootRenderLane = NoLane;
-
-	commitRoot(root);
 }
 
 function commitRoot(root: FiberRootNode) {
