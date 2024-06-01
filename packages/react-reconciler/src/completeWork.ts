@@ -7,7 +7,7 @@ import {
 } from 'hostConfig';
 
 import { FiberNode } from './fiber';
-import { NoFlags, Update } from './fiberFlags';
+import { NoFlags, Ref, Update } from './fiberFlags';
 import {
 	Fragment,
 	FunctionComponent,
@@ -18,6 +18,10 @@ import {
 
 function markUpdate(fiber: FiberNode) {
 	fiber.flags |= Update;
+}
+
+function markRef(fiber: FiberNode) {
+	fiber.flags |= Ref;
 }
 
 /**
@@ -38,6 +42,10 @@ export function completeWork(wip: FiberNode) {
 				// TODO update
 				// props 是否变化
 				markUpdate(wip);
+
+				if (current.ref !== wip.ref) {
+					markRef(wip);
+				}
 			} else {
 				// mount
 				// 1. 构建dom
@@ -45,6 +53,10 @@ export function completeWork(wip: FiberNode) {
 				// 2. 将dom插入到dom树中
 				appendAllChildren(instance, wip);
 				wip.stateNode = instance;
+				// 标记ref
+				if (wip.ref !== null) {
+					markRef(wip);
+				}
 			}
 			bubbleProperties(wip);
 			return null;
