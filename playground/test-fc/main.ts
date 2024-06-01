@@ -25,6 +25,7 @@ interface Work {
 	count: number;
 	priority: Priority;
 }
+
 const root = document.querySelector('#root');
 
 const workList: Work[] = [];
