@@ -4,6 +4,7 @@ export interface Dispatcher {
 	useState: <T>(initialState: T | (() => T)) => [T, Dispatch<T>];
 	// commit阶段完成后异步执行
 	useEffect: (callback: () => void | void, deps: any[] | void) => void;
+	useTransition: () => [boolean, (callback: () => void) => void];
 }
 
 export type Dispatch<State> = (action: Action<State>) => void;

@@ -20,7 +20,7 @@ let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
 let renderLane: Lane = NoLane;
 
-const { currentDispatcher } = internals;
+const { currentDispatcher, currentBatchConfig } = internals;
 
 interface Hook {
 	memorizedState: any;
@@ -76,7 +76,8 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 
 const HooksDispatcherOnMount: Dispatcher = {
 	useState: mountState,
-	useEffect: mountEffect
+	useEffect: mountEffect,
+	useTransition: mountTransition
 };
 
 function mountState<State>(
@@ -92,6 +93,7 @@ function mountState<State>(
 	const queue = createUpdateQueue<State>();
 	hook.updateQueue = queue;
 	hook.memorizedState = memorizedState;
+	hook.baseState = memorizedState;
 
 	// function App() {
 	// 	const [x,dispatch]= useState(0)
@@ -168,9 +170,30 @@ function createFunctionComponentUpdateQueue<State>() {
 	return updateQueue;
 }
 
+function mountTransition(): [boolean, (callback: () => void) => void] {
+	const [isPending, setPending] = mountState(false);
+	const hook = mountWorkInProgressHook();
+
+	const start = startTransition.bind(null, setPending);
+	hook.memorizedState = start;
+	return [isPending, start];
+}
+
+function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
+	setPending(true);
+	const prevTransition = currentBatchConfig.transition;
+	currentBatchConfig.transition = 1;
+
+	callback();
+	setPending(false);
+
+	currentBatchConfig.transition = prevTransition;
+}
+
 const HooksDispatcherOnUpdate: Dispatcher = {
 	useState: updateState,
-	useEffect: updateEffect
+	useEffect: updateEffect,
+	useTransition: updateTransition
 };
 
 function updateState<State>(): [State, Dispatch<State>] {
@@ -196,17 +219,16 @@ function updateState<State>(): [State, Dispatch<State>] {
 		current.baseQueue = baseQueue;
 
 		queue.shared.pending = null;
-
-		if (baseQueue !== null) {
-			const {
-				memorizedState,
-				baseQueue: newBaseQueue,
-				baseState: newBaseState
-			} = processUpdateQueue(baseState, pending, renderLane);
-			hook.memorizedState = memorizedState;
-			hook.baseQueue = newBaseQueue;
-			hook.baseState = newBaseState;
-		}
+	}
+	if (baseQueue !== null) {
+		const {
+			memorizedState,
+			baseQueue: newBaseQueue,
+			baseState: newBaseState
+		} = processUpdateQueue(baseState, pending, renderLane);
+		hook.memorizedState = memorizedState;
+		hook.baseQueue = newBaseQueue;
+		hook.baseState = newBaseState;
 	}
 
 	return [hook.memorizedState, queue.dispatch as Dispatch<State>];
@@ -263,6 +285,14 @@ function areHookInputsEqual(nextDeps: EffectDeps, prevDeps: EffectDeps) {
 		return false;
 	}
 	return true;
+}
+
+function updateTransition(): [boolean, (callback: () => void) => void] {
+	const [isPending] = updateState();
+	const hook = updateWorkInProgressHook();
+	const start = hook.memorizedState;
+
+	return [isPending as boolean, start];
 }
 
 // 获取当前工作hook
