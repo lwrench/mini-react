@@ -7,8 +7,10 @@ import {
 } from 'hostConfig';
 
 import { FiberNode } from './fiber';
+import { popProvider } from './fiberContext';
 import { NoFlags, Ref, Update } from './fiberFlags';
 import {
+	ContextProvider,
 	Fragment,
 	FunctionComponent,
 	HostComponent,
@@ -82,7 +84,12 @@ export function completeWork(wip: FiberNode) {
 		case FunctionComponent:
 		case Fragment:
 			bubbleProperties(wip);
-			return;
+			return null;
+		case ContextProvider:
+			const context = wip.type._context;
+			popProvider(context);
+			bubbleProperties(wip);
+			return null;
 		default:
 			if (__DEV__) {
 				console.warn('未处理的completeWork情况', wip);
@@ -90,6 +97,7 @@ export function completeWork(wip: FiberNode) {
 			break;
 	}
 }
+
 /**
  * 向parent插入fiber的dom节点，
  * 如果子fiber是dom类型，就执行插入，
