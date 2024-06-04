@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint --ext .ts,.js,.jsx,.tsx --fix --quiet ./packages",
+    "lint": "eslint --ext .ts,.js,.jsx,.tsx,.md --fix --quiet ./packages",
     "build:dev": "rimraf dist && rollup --bundleConfigAsCjs --config scripts/rollup/dev.config.js",
     "play": "vite serve playground/test-fc --config scripts/vite/vite.config.js --force",
     "test": "jest --config scripts/jest/jest.config.js",
