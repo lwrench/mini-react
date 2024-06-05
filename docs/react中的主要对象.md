@@ -1,4 +1,4 @@
-# 主流程
+# react中的主要对象
 
 在介绍主流程之前，需要理解 react 中的几种数据结构 / 数据类型：
 
@@ -202,3 +202,19 @@ class FiberNode {
 - pendingProps：类比ReactElement对象中的props
 - key：react保留属性
 
+同时我们可以提前关注一下一些高频出现的fiber属性
+
+- return/sibling/child/index：react内部会构建树状结构（参考dom树状结构），通过return/sibling/child来连接fiber节点，return标识当前fiber节点的父节点，sibling标识当前fiber的兄弟节点，child标识当前fiber的子节点，index标识当前fiber为父fiber的第几个child，也即sibling中的位置
+
+- alternate：在react内部采用双缓存技术，workInProgress（下文都用wip标识）和current分别标识两颗fiber树，current标识当前页面对应的fiber树，wip标识更新触发后正在更新的fiber树，两颗树中的fiber通过alternate属性连接，互为备份，这样在react不停的更新中不用反复创建新的fiber对象，尽可能去复用能够复用的对象和属性，并且能够对上一次更新的数据做备份
+- stateNode：fiber节点对应的真实dom
+
+现在我们可以知道fiber就是一个对象，是react运行时的最小工作单元，这些工作单元会通过return/sibling/child/index属性连接成一颗fiber树，可以算作一种react实现的描述html Dom结构的DSL，react的所有功能都是在fiber树的基础上实现的。
+
+那上文提到的fiberRootNode又是什么东西？我们注意到每个fiber都会有一个stateNode属性用来存储dom，由于hostRootFiber的特殊性，是fiber树的根节点，连接的dom也特殊，是container节点，所以对container节点做了包装，这个包装就是fiberRootNode，其current属性指向hostRootFiber，而hostRootFiber的stateNode指向fiberRootNode。
+
+在下一篇文章中，将介绍react的主流程，如何围绕fiber渲染出页面，以及在页面交互触发更新时如何配合fiber去做更新操作。
+
+
+
+> 本系列文章是学习《**从0实现React18**》课程后的总结，对应的实现仓库可以参考[mini-react](https://github.com/lwrench/mini-react)
