@@ -1,6 +1,7 @@
 ```tsx
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
+
 function App() {
 	return (
 		<div>
@@ -8,6 +9,7 @@ function App() {
 		</div>
 	);
 }
+
 ReactDOM.createRoot(document.querySelector('#root')).render(<App />);
 ```
 
@@ -17,6 +19,7 @@ ReactDOM.createRoot(document.querySelector('#root')).render(<App />);
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { jsx as _jsx } from 'react/jsx-runtime';
+
 function App() {
 	return /*#__PURE__*/ _jsx('div', {
 		children: /*#__PURE__*/ _jsx('span', {
@@ -24,9 +27,10 @@ function App() {
 		})
 	});
 }
+
 ReactDOM.createRoot(document.querySelector('#root')).render(
 	/*#__PURE__*/ _jsx(App, {})
 );
 ```
 
-https://shorturl.at/eHIJ3
+[babel playground](https://shorturl.at/eHIJ3)
